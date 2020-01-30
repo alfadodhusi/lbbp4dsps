@@ -1,0 +1,466 @@
+---
+title: "Michelin Restaurants Around The World"
+author: "Alfado Dhusi Sembiring"
+date: "17/1/2020"
+output: 
+  rmdformats::material:
+    self_contained: true
+    highlight : tango
+    thumbnails: true
+    lightbox: true 
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, message = F, warning = F)
+```
+# Introduction
+
+Hello everyone! 
+All people want to eat at good and high rated resataurants. Therefore, we all have to know which restaurant is good,better, best or even worst. Regarding to this situation, an institution called Michelin developed a way to score and evaluate how good a restaurant is. They give stars to a restaurant which is good for them. More stars that a restaurant get more good it will be. 
+
+This document, summarise the distribution of 1,2, and 3 stars restaurant in many different countries. However, after observing the data, we can conclude that there are only 3 different continents who have 1,2,3 star restaurants. 
+
+At the end, I hope that you can get much information abaout the distiburion of michelin restaurant in the world and someday it can be a reference to go.
+Thankyou and happy reading!
+
+# Preparation
+Before start, we need to load our packages
+
+```{r}
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(glue)
+library(plyr)
+library(tidyr)
+```
+
+
+# Data Processing 
+
+## 1-Star 
+```{r}
+onestar <- read.csv(file = "one-star-michelin-restaurants.csv")[ , -c(3,4,5,7,10)]
+```
+### Check Data Types
+
+ I will check for the data types
+
+```{r}
+str(onestar) #check for all data types
+```
+### Convert as.factor
+
+I found that "year" coloumn still in int, therefore I am going to convert it to factor
+
+```{r}
+onestar$year <- as.factor(onestar$year)
+
+```
+Got it!
+Now I will check for the summary of the region, so I can group the region into five different continents in the world
+```{r}
+summary(onestar[ , "region"])
+```
+### Making new coloumn
+
+Making a new column named "continent"
+```{r}
+asia <- c("Hong Kong", "Macau","Singapore","South Korea","Taipei","Thailand")
+america <- c("California","Chicago","New York City","Washington DC", "Rio de Janeiro","Sao Paulo")
+
+onestar$continent <- ifelse(onestar$region %in% asia , "Asia", ifelse(onestar$region %in% america, "America", "Europe"))
+  
+onestar$continent <-as.factor(onestar$continent)
+
+```
+
+### Using ggplot2
+Let us see the diagram of all the number of one-michelin star restaurant in the world
+```{r}
+
+
+ggplot(data = onestar, mapping = aes(x = continent)) +
+  geom_bar(mapping = aes(fill = continent, 
+                         )) +
+  labs (title = "Numbers of One Michelin Star Restaurants", x="", y="Counts", fill = "Continent") +
+  theme (plot.title = element_text(face = "bold"), panel.grid = element_blank(), panel.background = element_rect(fill = "white"))
+
+
+```
+
+Wohoo! Most of one-michelin star restaurants are located in Europe! 
+
+Now let's compare the prices between the continents
+
+
+```{r}
+table (onestar$price, onestar$continent)
+onestar$rate <- ifelse(onestar$price == "$", 1 , 
+                       ifelse(onestar$price == "$$", 2 ,
+                              ifelse(onestar$price == "$$$", 3,
+                                     ifelse(onestar$price== "$$$$", 4 , 5))))
+table ( onestar$continent, onestar$rate)
+table_rate <-aggregate(rate ~ continent, onestar, FUN= mean)
+table_rate$rate <- round(table_rate$rate, 2)
+
+
+
+p1<- ggplot(data = table_rate, mapping = aes(x = continent, y= rate)) +
+  geom_col(mapping = aes(fill = continent, 
+  text = glue("Continent : {continent} 
+              Rate : {rate}"), 
+           )) +
+  labs (title = "Rate Comparison Between One Michelin Star Restaurant", x="", y="Rate", fill = "Continent") +
+  theme (plot.title = element_text(face = "bold"), panel.grid = element_blank(), panel.background = element_rect(fill = "white")) 
+    
+ggplotly(p1, tooltip = "text")
+
+```
+
+One star restaurants in Europe are the most expensive than the others. 
+
+ 
+Now let's look at 2 stars restaurants
+
+## 2-Star
+```{r}
+twostar<- read.csv(file="two-stars-michelin-restaurants.csv")[ , -c(3,4,5,7,10)]
+twostar$year <- as.factor(twostar$year)
+str(twostar)
+
+```
+### Making continent coloumn
+
+We do the same thing as one star
+
+```{r}
+twostar$continent <- ifelse(twostar$region %in% asia , "Asia", ifelse(twostar$region %in% america, "America", "Europe"))
+  
+twostar$continent <-as.factor(twostar$continent)
+```
+
+### Creating ggplot2
+And How about 2 star?
+
+```{r}
+ggplot(data = twostar, mapping = aes(x = continent)) +
+  geom_bar(mapping = aes(fill = continent)) +
+  labs (title = "Numbers of Two Michelin Star Restaurants", x="", y="Counts", fill = "Continent") +
+  theme (plot.title = element_text(face = "bold"), panel.grid = element_blank(), panel.background = element_rect(fill = "white"))
+```
+
+Just like one star, mots of two stars michelin restaurants are located in Europe! (38)
+
+```{r}
+table (twostar$price, twostar$continent)
+twostar$rate <- ifelse(twostar$price == "$", 1 , 
+                       ifelse(twostar$price == "$$", 2 ,
+                              ifelse(twostar$price == "$$$", 3,
+                                     ifelse(twostar$price== "$$$$", 4 , 5))))
+
+table ( twostar$continent, twostar$rate)
+table_rate_two <-aggregate(rate ~ continent, twostar, FUN= mean)
+table_rate_two$rate <- round(table_rate_two$rate, 2)
+
+
+
+p2<- ggplot(data = table_rate_two, mapping = aes(x = continent, y= rate)) +
+  geom_col(mapping = aes(fill = continent, 
+  text = glue("Continent : {continent} 
+               Rate : {rate}") )) +
+  labs (title = "Rate Comparison Between Two Michelin Star Restaurant", x="", y="Rate", fill = "Continent") +
+  theme (plot.title = element_text(face = "bold"), panel.grid = element_blank(), panel.background = element_rect(fill = "white")) 
+
+ggplotly(p2, tooltip = "text")
+
+
+
+```
+
+And again, two star restaurants in Europe are the most expensive, while the cheapest are in asia. 
+
+## 3-Star
+```{r}
+threestar<- read.csv(file = "three-stars-michelin-restaurants.csv")[ , -c(3,4,5,7,10)]
+names(threestar)
+threestar$year <- as.factor(threestar$year)
+str(threestar)
+
+```
+
+### Creating ggplot2
+And last for the 3 star restaurants, are there any differences?
+
+```{r}
+threestar$continent <- ifelse(threestar$region %in% asia , "Asia", ifelse(threestar$region %in% america, "America", "Europe"))
+  
+threestar$continent <-as.factor(threestar$continent)
+```
+```{r}
+ggplot(data = threestar, mapping = aes(x = continent)) +
+  geom_bar(mapping = aes(fill = continent)) +
+  labs (title = "Numbers of Three Michelin Star Restaurants", x="", y="Counts", fill = "Continent") +
+  theme (plot.title = element_text(face = "bold"), panel.grid = element_blank(), panel.background = element_rect(fill = "white"))
+
+```
+
+Wow! Although Europe has the highest numbers of one-star and two-star restaurants in the world, it has the lowest in three star restaurants. The highest is now in America while Asia stands in 2nd. Interesting!
+
+Now how about the prices?
+
+```{r}
+table (threestar$price, threestar$continent)
+threestar$rate <- ifelse(threestar$price == "$", 1 , 
+                       ifelse(threestar$price == "$$", 2 ,
+                              ifelse(threestar$price == "$$$", 3,
+                                     ifelse(threestar$price== "$$$$", 4 , 5))))
+
+table ( threestar$continent, threestar$rate)
+table_rate_three <-aggregate(rate ~ continent, threestar, FUN= mean)
+table_rate_three$rate <- round(table_rate_three$rate, 2)
+
+
+
+p3<- ggplot(data = table_rate_three, mapping = aes(x = continent, y= rate)) +
+  geom_col(mapping = aes(fill = continent, 
+  text = glue("Continent : {continent} 
+               Rate : {rate}"))) +
+  labs (title = "Rate Comparison Between Three Michelin Star Restaurant", x="", y="Rate", fill = "Continent") +
+  theme (plot.title = element_text(face = "bold"), panel.grid = element_blank(), panel.background = element_rect(fill = "white"))
+
+
+ggplotly (p3, tooltip= "text")
+```
+
+As wee see, from one,two,and three star restaurants, Europe has the most expensives dishes in the world. 
+
+
+# Creating chart to visualize all data
+
+Now, for a better visualization we make the charts simpler.
+
+```{r}
+asia1 <- nrow(onestar[onestar$continent == "Asia", ])
+asia2 <- nrow(twostar[twostar$continent == "Asia", ])
+asia3 <- nrow(threestar[threestar$continent == "Asia", ])
+
+asia.mul <- rbind (asia1, asia2, asia3)
+asia.mul <- as.data.frame(asia.mul)
+names(asia.mul)[names(asia.mul) == "V1"] <- "Asia"
+asia.mul$Star <- c("1-Star", "2-Star","3-Star")
+asia.mul<- asia.mul[, c(2,1)]
+asia.mul$Star <- as.factor(asia.mul$Star)
+asia.mul
+```
+
+```{r}
+america1 <- nrow(onestar[onestar$continent == "America", ])
+america2 <- nrow(twostar[twostar$continent == "America", ])
+america3 <- nrow(threestar[threestar$continent == "America", ])
+america.mul <- rbind (america1, america2, america3)
+america.mul <- as.data.frame(america.mul)
+names(america.mul)[names(america.mul) == "V1"] <- "America"
+america.mul$Star <- c("1-Star", "2-Star","3-Star")
+america.mul<- america.mul[, c(2,1)]
+america.mul$Star <- as.factor(america.mul$Star)
+america.mul
+
+```
+```{r}
+europe1 <- nrow(onestar[onestar$continent == "Europe", ])
+europe2 <- nrow(twostar[twostar$continent == "Europe", ])
+europe3 <- nrow(threestar[threestar$continent == "Europe", ])
+europe.mul <- rbind (europe1, europe2, europe3)
+europe.mul <- as.data.frame(europe.mul)
+names(europe.mul)[names(europe.mul) == "V1"] <- "Europe"
+europe.mul$Star <- c("1-Star", "2-Star","3-Star")
+europe.mul<- europe.mul[, c(2,1)]
+europe.mul$Star <- as.factor(europe.mul$Star)
+europe.mul
+
+```
+
+```{r}
+mat<- cbind (asia.mul,america.mul,europe.mul)
+mat<- mat [, -c(3,5)]
+mat
+
+
+mulp<- pivot_longer(mat, cols= c("Asia","America","Europe"))
+mulp
+colnames(mulp) <- c("Star", "Continent","Star_Count")
+mulp$Continent <- as.factor (mulp$Continent)
+mulp
+
+```
+
+Time to ggplot!
+```{r}
+library(extrafont)
+p4 <- ggplot (data = mulp, mapping = aes(x= Continent, y=Star_Count)) +
+  geom_col (mapping = aes(fill = Star, 
+  text = glue("Continent : {Continent} 
+               Star Count : {Star_Count}")), position = "dodge") +
+  labs(x ="", y="Count", fill = "", title = "Number of Michelin Star Restaurant in America, Asia, and Europe") +
+  theme (plot.title = element_text(size = 10, face = "bold"),  panel.background = element_rect(colour = "red", fill="beige"),axis.title.y = element_text(size = 10))
+  
+ggplotly(p4, tooltip = "text")
+ 
+```
+
+Chart above is the summary of total number of 1-star,2-star,3-star michelin restaurants in America, Asia , and Europe.
+
+
+
+# Trend in Michelin Restaurants
+
+Our data have information about the time (in year) of michelin restaurants in the world. We will see if there are changes about the number of michelin restaurant  year by year (starting from 2018)
+
+## Data Wrangling
+
+We group the data by each continents.
+
+```{r}
+
+#For Asia
+oneasia<- onestar %>% 
+  filter (continent =="Asia") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("1-star"))
+
+twoasia<- twostar %>% 
+  filter(continent == "Asia") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("2-star"))
+
+threeasia<- threestar %>% 
+  filter(continent == "Asia") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("3-star"))
+
+```
+
+```{r}
+#For America 
+oneamerica<- onestar %>% 
+  filter (continent =="America") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = "1-star") 
+
+
+
+twoamerica<- twostar %>% 
+  filter(continent == "America") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("2-star"))
+
+
+threeamerica<- threestar %>% 
+  filter(continent == "America") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("3-star"))
+
+```
+
+```{r}
+#For Europe
+
+oneeurope<- onestar %>% 
+  filter (continent == "Europe") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("1-star"))
+
+twoeurope<- twostar %>% 
+  filter(continent == "Europe") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("2-star"))
+
+threeeurope<- threestar %>% 
+  filter(continent == "Europe") %>% 
+  select(year, continent) %>% 
+  group_by(year, continent) %>%
+  count() %>% 
+  mutate(star = as.factor("3-star"))
+
+```
+## Data Visualisation
+
+Table joining using full join
+```{r}
+star1<- oneasia %>% 
+  full_join(oneamerica) %>% 
+  full_join(oneeurope)
+
+star2<- twoasia %>% 
+  full_join(twoamerica) %>% 
+  full_join(twoeurope)
+
+star3<- threeasia %>% 
+  full_join(threeamerica) %>% 
+  full_join(threeeurope)
+
+fix<- star1 %>% 
+  full_join(star2) %>% 
+  full_join(star3) 
+
+fix[,c("year", "star")] <- lapply(fix[,c("year", "star")], as.factor)
+
+fix %>% 
+  arrange (continent)
+
+```
+
+Now we make the plot!
+
+```{r}
+p10<- fix %>% 
+  ggplot(mapping = aes(x= continent, y=freq))+
+  geom_col(aes(fill = year, text = glue("Continent = {continent}
+                                         Year : {year}
+                                         Counts : {freq}")), position = "dodge")+
+  facet_wrap(~star, nrow =1 ) +
+  theme_minimal()+
+  labs(title = "Trend of Michelin Star Restaurants Between 2018 and 2019", y = "counts")+
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        axis.title.y = element_text(size = 11))
+
+ggplotly(p10, tooltip ="text")
+
+```
+
+As we can see from the charts above, only Asia has michelin restaurants in 2018.
+
+
+# Conclusion
+
+After processing all data, here what we can get:   
+
+1.Europe has the highest number of Michelin Stars restaurant. This indicates that most of European restaurants are highly rated.    
+2 The most expensive restaurants are located in Europe     
+3 No 1,2,3 stars Michelin restaurants established in Africa and      Australia      
+4.Only Asia has michelin restaurants in 2018
+ 
+So this this the end of the article.    
+
+Thank you for reading and see you on the next ones!
+
+
+
